@@ -16,4 +16,4 @@ for num in left_col:
     score = matches * num
     total += score
 
-print(f"The similarity score is: {total}")
+print(f"The similarity score is: {total}")  # 23927637
