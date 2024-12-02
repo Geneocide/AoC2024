@@ -8,9 +8,11 @@ with filepath.open() as file:
 
 
 def pairChecker(left, right, isAscending):
-    if abs(left - right) > 3 or left == right:  # unsafe
-        return False
-    if (left < right) != isAscending:  # unsafe, changed directions
+    if (
+        abs(left - right) > 3  # max delta is 3
+        or left == right  # min delta is 1
+        or (left < right) != isAscending  # must continue ascending or descending
+    ):  # unsafe
         return False
     return True
 
