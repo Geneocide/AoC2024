@@ -106,3 +106,8 @@ for location in guard.travelled:
         print(f"Loop created when blocking at {(y, x)}")
 
 print(f"A total of {loopsCreated} possible loops were found.")  # 1909
+
+# could possible speed things up by keeping travelled locations in a list. Then we could skip most of the travelled in some cases
+# when testing possible loops
+# would need to figure out facing direction by keeping track of corners hit
+# technically doesn't need to be set in this problem cause we're not counting distinct visited.
