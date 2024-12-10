@@ -44,7 +44,7 @@ class DoublyLinkedList:
         else:
             stop = node
         while cur and cur != stop:
-            if cur.data == []:
+            if not cur.data:
                 tmp = cur
                 cur.prev.next = tmp.next
                 cur.next.prev = tmp.prev

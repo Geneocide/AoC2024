@@ -41,7 +41,7 @@ while backwards.prev != dll.head:
         backwards = backwards.prev
         continue
     forwards = dll.head
-    while forwards.next != backwards:
+    while forwards != backwards:
         if forwards.isSpace and len(forwards.data) >= len(backwards.data):
             forwards.data = forwards.data[: -1 * len(backwards.data)]
             dll.insert(forwards.prev, backwards.data, False, True)
@@ -68,5 +68,5 @@ for i, fileIndex in enumerate(expanded):
     checksum += int(fileIndex) * i
 
 end_time = time.perf_counter()
-print(f"The calculated checksum is {checksum}")  # 6415163644414 too high
+print(f"The calculated checksum is {checksum}")  # 6415163644414 too high, 6415163624282
 print(f"Elapsed time: {(end_time - start_time):.6f} seconds")
