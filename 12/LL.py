@@ -14,7 +14,7 @@ class Node:
         return new_node
 
 
-class Trail:
+class DLL:
     def __init__(self):
         self.head = None
         self.tail = None
