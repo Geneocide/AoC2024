@@ -1,6 +1,6 @@
 from pathlib import Path
 
-filepath = Path(__file__).parent / "input.txt"
+filepath = Path(__file__).parent / "inputTest.txt"
 
 areaMap = []
 with filepath.open() as file:
@@ -20,11 +20,13 @@ all_dirs = {
 
 
 class Guard:
-    def __init__(self, map):
+    def __init__(self, map, location=None, facing="N"):
         self.map = map
-        self.facing = "N"
-        self.travelled = set()
-        self.location = self.getStart()
+        self.facing = facing
+        self.travelled = []
+        self.location = location
+        if not self.location:
+            self.location = self.getStart()
 
     def getNextFacing(self):
         if self.facing == "N":
@@ -44,62 +46,75 @@ class Guard:
             return None
         try:
             movingToChar = self.map[check_coords[1]][check_coords[0]]
-            if movingToChar in "#O":
+            if movingToChar in "#":
                 self.getNextFacing()
                 check_coords = self.move()
             self.location = check_coords
-            self.travelled.add(self.location)
+            self.travelled.append(self.location)
             return check_coords
         except IndexError:
             self.location = None
             return None
 
     def runMap(self):
-        moveCount = 0
-        movesSinceNewVisited = 0
+        tf = []
         while self.location:
-            if movesSinceNewVisited > len(self.travelled):
+            tf.append((self.location, self.facing))
+            if len(tf) != len(set(tf)):
                 return True
-            distinctSpacesBefore = len(self.travelled)
             self.move()
-            distinctSpacesAfter = len(self.travelled)
-            if distinctSpacesAfter > distinctSpacesBefore:
-                movesSinceNewVisited = 0
-            movesSinceNewVisited += 1
-            moveCount += 1
         return False
 
     def getStart(self):
         for y, row in enumerate(self.map):
             if "^" in row:
                 loc = (row.find("^"), y)
-                self.travelled.add(loc)
+                self.travelled.append(loc)
                 return loc
 
+
+# def oneStepBack(location, facing):
+#     scalar = (all_dirs[facing][0], all_dirs[facing][1])
+#     check_coords = (location[0] - scalar[0], location[1] - scalar[1])
+#     if check_coords[0] < 0 or check_coords[1] < 0:
+#         return None
+#     return check_coords
 
 guard = Guard(areaMap)
 guardLocation = guard.location
 guard.runMap()
 
-print(guard.travelled)
+travelledSet = set(guard.travelled)
 travelledMap = []
 for y, line in enumerate(areaMap):
     for x, char in enumerate(line):
-        if (x, y) in guard.travelled:
+        if (x, y) in travelledSet:
             line = line[:x] + "X" + line[x + 1 :]
     travelledMap.append(line)
 
 for line in travelledMap:
     print(line)
 
-print(f"The guard moved to {len(guard.travelled)} distinct locations")
+print(f"The guard moved to {len(travelledSet)} distinct locations")
 
 loopsCreated = 0
-for location in guard.travelled:
+for i, location in enumerate(guard.travelled):
+    if i == 0:
+        continue
+    prev_location = guard.travelled[i - 1]
     alteredMap = areaMap.copy()
+    x0, y0 = prev_location
     x, y = location
-    alteredMap[y] = alteredMap[y][:x] + "O" + alteredMap[y][x + 1 :]
-    varientGuard = Guard(alteredMap)
+    if x0 - x == 1:
+        facing = "W"
+    elif x0 - x == -1:
+        facing == "E"
+    elif y0 - y == 1:
+        facing = "N"
+    elif y0 - y == -1:
+        facing = "S"
+    alteredMap[y] = alteredMap[y][:x] + "#" + alteredMap[y][x + 1 :]
+    varientGuard = Guard(alteredMap, prev_location, facing)
     loopFound = varientGuard.runMap()
     if loopFound:
         loopsCreated += 1
