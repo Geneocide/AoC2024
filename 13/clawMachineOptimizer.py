@@ -43,7 +43,7 @@ with filepath.open() as file:
 
 totalTokens = 0
 for machine in machines:
-    # print(machine)
+    print(f"\n{machine}\n")
     prize = machine.prize
     A = machine.A
     B = machine.B
@@ -57,9 +57,10 @@ for machine in machines:
         for j in range(100):
             if i * A[0] + j * B[0] == prize[0] and i * A[1] + j * B[1] == prize[1]:
                 solutions.append((i, j))
-    # print(solutions)
-    # if not solutions:
-    #     print("NO SOLUTION FOUND!")
+    if not solutions:
+        print("NO SOLUTION FOUND!")
+    else:
+        print(solutions)
     for solution in solutions:
         tokens = 3 * solution[0] + solution[1]
         # print(f"Solution costs: {tokens}")

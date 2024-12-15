@@ -2,9 +2,9 @@ from pathlib import Path
 import time
 from math import sqrt
 
-filepath = Path(__file__).parent / "inputTest2.txt"
-# calibrationError = 10000000000000
-calibrationError = 0
+filepath = Path(__file__).parent / "input.txt"
+calibrationError = 10000000000000
+# calibrationError = 0
 
 
 class Machine:
@@ -12,9 +12,27 @@ class Machine:
         self.A = None
         self.B = None
         self.prize = None
+        self.solutions = []
 
     def __str__(self):
         return f"A: {self.A}\nB: {self.B}\nPrize: {self.prize}"
+
+    def findSolutions(self):
+        eq1, eq2 = zip(self.A, self.B, self.prize)
+        x1, y1, z1 = eq1
+        x2, y2, z2 = eq2
+
+        determinant = x1 * y2 - x2 * y1
+        if determinant == 0:
+            return
+
+        a = round((y2 * z1 - y1 * z2) / determinant)
+        b = round((x1 * z2 - x2 * z1) / determinant)
+
+        if a * x1 + b * y1 == z1 and a * x2 + b * y2 == z2:
+            self.solutions.append((a, b))
+
+        return
 
 
 def factorize(n):
@@ -130,41 +148,19 @@ totalTokens = 0
 for machine in machines:
     print(f"\n{machine}\n")
     prize = machine.prize
-    A = machine.A
-    B = machine.B
-    xFactors = factorize(prize[0])
-    yFactors = factorize(prize[1])
 
-    solutions = []
-    possibleSolutions = processFactors(A[0], B[0], xFactors, prize[0])
-    possibleSolutions.extend(processFactors(A[1], B[1], yFactors, prize[1]))
-    possibleSolutions = set(possibleSolutions)
-    for possible in possibleSolutions:
-        if (
-            A[0] * possible[0] + B[0] * possible[1] == prize[0]
-            and A[1] * possible[0] + B[1] * possible[1] == prize[1]
-        ):
-            solutions.append(possible)
-    if not solutions:
-        possibleSolutions = force(A[0], B[0], prize[0], xFactors)
-        possibleSolutions = set(possibleSolutions)
-        for possible in possibleSolutions:
-            if (
-                A[0] * possible[0] + B[0] * possible[1] == prize[0]
-                and A[1] * possible[0] + B[1] * possible[1] == prize[1]
-            ):
-                solutions.append(possible)
+    machine.findSolutions()
 
-    print(solutions)
-    if solutions:
-        tokens = 1e10
-        for solution in solutions:
+    print(machine.solutions)
+    if machine.solutions:
+        tokens = 1e18
+        for solution in machine.solutions:
             solutionTokens = 3 * solution[0] + solution[1]
             if solutionTokens < tokens:
                 tokens = solutionTokens
 
         totalTokens += tokens
 
-print(f"The total tokens to get max prizes is: {totalTokens}")  # 26411 too low, 26599
+print(f"The total tokens to get max prizes is: {totalTokens}")  # 106228669504887
 end_time = time.perf_counter()
 print(f"Elapsed time: {(end_time - start_time):.6f} seconds")
