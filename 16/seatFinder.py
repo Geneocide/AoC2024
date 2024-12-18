@@ -13,6 +13,7 @@ class Trail:
 
     def handleMove(self, facing):
         if facing == self.facings[-1]:
+            self.facings.append(facing)
             self.cost += 1
         else:
             self.cost += 1001
@@ -24,15 +25,19 @@ class Trail:
         self.cost += branch.cost
 
 
-def prettyPrint(aMap: dict, trail: Trail = None):
+def prettyPrint(aMap: dict, trail=None):
     print()
     for py in range(Y_MAX):
         print_line = ""
         for px in range(X_MAX):
-            if trail and (px, py) in trail.positions:
-                c = "S"
-            else:
-                c = aMap[(px, py)]
+            c = aMap[(px, py)]
+            if trail:
+                if isinstance(trail, Trail):
+                    if (px, py) in trail.positions:
+                        c = "S"
+                elif isinstance(trail, set):
+                    if (px, py) in trail:
+                        c = "S"
             if c == "#":
                 c = "⛄"
             elif c == ".":
@@ -95,19 +100,35 @@ def followPaths(current_trail: Trail):
     counter = count()
     heap = [
         (
-            current_trail.cost + heuristic(current_trail.positions[-1], goal),
+            current_trail.cost,
             next(counter),
             current_trail,
         )
     ]
+    visited = (
+        {}
+    )  # Dictionary to store the minimum cost to reach each position with a specific facing
     while heap:
-        _, _, current_trail = heapq.heappop(heap)
+        current_cost, _, current_trail = heapq.heappop(heap)
+        current_position = current_trail.positions[-1]
+        current_facing = current_trail.facings[-1]
         # prettyPrint(mazeDict, current_trail)
+        # Check if we have already visited this state with a lower cost
+        if (
+            (current_position, current_facing) in visited
+            and visited[(current_position, current_facing)] < current_cost
+            or current_cost > validTrails[0].cost
+        ):
+            continue
+
+        # Update the visited dictionary with the current cost
+        visited[(current_position, current_facing)] = current_cost
         if goal == current_trail.positions[-1]:  # made it to the end
             print(f"Found a solution with a cost of {current_trail.cost}")
             validTrails.append(current_trail)
             continue
-        paths = getOpenPaths(current_trail.positions[-1], current_trail.facings[-1])
+        paths = getOpenPaths(current_position, current_facing)
+
         # while len(paths) == 1:
         #     if moveOneStep(paths[0], trail):
         #         paths = getOpenPaths(*trail.positions[-1])
@@ -119,6 +140,8 @@ def followPaths(current_trail: Trail):
         # if not paths:
         #     return None  # dead end
         for path in paths:
+            if path in trail.positions:
+                continue
             # newSegment = copy.deepcopy(trail)
             new_trail = Trail(
                 current_trail.positions[:], current_trail.facings[:], current_trail.cost
@@ -137,30 +160,23 @@ def followPathsAStar(start_trail: Trail):
             start_trail,
         )
     ]
-    visited = {}  # To keep track of visited nodes
+    visited = set()  # To keep track of visited nodes
 
     while heap:
         _, _, current_trail = heapq.heappop(heap)
         # prettyPrint(mazeDict, current_trail)
 
-        current_position = current_trail.positions[-1]
-        current_cost = current_trail.cost
-
-        # If this position has been visited with a lower cost, skip it
-        if current_position in visited and visited[current_position] < current_cost:
+        if current_trail.positions[-1] in visited:
             continue
 
-        visited[current_position] = current_cost
+        visited.add(current_trail.positions[-1])
 
-        if goal == current_position:  # Reached the goal
-            if not validTrails or current_cost < validTrails[0].cost:
-                validTrails.clear()
-                validTrails.append(current_trail)
-            elif current_cost == validTrails[0].cost:
-                validTrails.append(current_trail)
+        if goal == current_trail.positions[-1]:  # Reached the goal
+            print(f"Found a solution with a cost of {current_trail.cost}")
+            validTrails.append(current_trail)
             continue
 
-        paths = getOpenPaths(current_position, current_trail.facings[-1])
+        paths = getOpenPaths(current_trail.positions[-1], current_trail.facings[-1])
         for path in paths:
             new_trail = Trail(
                 current_trail.positions[:], current_trail.facings[:], current_trail.cost
@@ -175,14 +191,12 @@ def followPathsAStar(start_trail: Trail):
 
 start_time = time.perf_counter()
 
-filepath = Path(__file__).parent / "inputTest.txt"
+filepath = Path(__file__).parent / "input.txt"
 with filepath.open() as file:
     lines = [line.rstrip() for line in file]
 
 X_MAX = len(lines[0])
 mazeDict = {}
-deer = ()
-trail = []
 validTrails = []
 all_dirs = {
     "^": (0, -1),
@@ -195,16 +209,16 @@ for y, line in enumerate(lines):
     for x, char in enumerate(line):
         if char == "S":
             trail = Trail([(x, y)], [">"])
+            start = Trail([(x, y)], [">"])
         if char == "E":
             goal = (x, y)
         mazeDict[(x, y)] = char
 
 prettyPrint(mazeDict)
 
-# followPaths(trail)
+
 validTrails = followPathsAStar(trail)
-trail = Trail([(x, y)], [">"])
-validTrails = followPathsAStar(trail)
+validTrails.extend(followPaths(start))
 
 minimumCostTrail = 1e20
 for trail in validTrails:
@@ -212,6 +226,12 @@ for trail in validTrails:
         minimumCostTrail = trail.cost
     prettyPrint(mazeDict, trail)
 
+gestalt = set()
+for trail in validTrails:
+    gestalt.update([position for position in trail.positions])
+prettyPrint(mazeDict, gestalt)
+
 print(f"The minimum cost trail costs {minimumCostTrail}")  # 107512
+print(f"The number of tiles along a good path is {len(gestalt)}")
 end_time = time.perf_counter()
 print(f"Elapsed time: {(end_time - start_time):.6f} seconds")
