@@ -1,5 +1,6 @@
 from pathlib import Path
 import time
+from itertools import product
 
 filepath = Path(__file__).parent / "input.txt"
 
@@ -92,18 +93,29 @@ def getTriBit():
 
 analysis = []
 programStr = [str(i) for i in program]
-while output != programStr:
-    for value in getTriBit():
-        registers["A"] = int("001" + "000" + value, 2)
-        registers["B"] = 0
-        registers["C"] = 0
-        output = simulation(registers, program)
-        if not analysis or analysis[-1][1] != output:
-            analysis.append((value, output))
-            print(analysis[-1])
+goodInputs = {}
 
-print(f"Found good register value: {values}")
-# print(octal_to_decimal("14654") * 8)
+for i in reversed(range(len(program))):
+    targetBit = str(program[i])
+    combos = list(product(*[v for v in goodInputs.values() if v]))
+    goodInputsStrings = ["".join(combo) for combo in combos]
+    for goodInputString in goodInputsStrings:
+        for value in getTriBit():
+            # if i != len(program) - 1:
+            registers["A"] = int(goodInputString + value, 2)
+            # registers["A"] = int("001" + "000" + value, 2)
+            registers["B"] = 0
+            registers["C"] = 0
+            output = simulation(registers, program)
+            if output[0] == targetBit:
+                if goodInputs and i in goodInputs:
+                    goodInputs[i].add(value)
+                else:
+                    goodInputs[i] = {value}
+            if not analysis or analysis[-1][1] != output:
+                analysis.append((value, output))
+                print(analysis[-1])
+    # add logic for if we're doing the last bit and keeping track of smallest number
 
 
 print(f"Device output is {','.join(output)}")  # 1,7,2,1,4,1,5,4,0
