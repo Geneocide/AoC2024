@@ -94,30 +94,36 @@ def getTriBit():
 analysis = []
 programStr = [str(i) for i in program]
 goodInputs = {}
+minimumInput = 9e25
 
 for i in reversed(range(len(program))):
     targetBit = str(program[i])
-    combos = list(product(*[v for v in goodInputs.values() if v]))
-    goodInputsStrings = ["".join(combo) for combo in combos]
-    for goodInputString in goodInputsStrings:
+    # combos = list(product(*[v for v in goodInputs.values() if v]))
+    # goodInputsStrings = ["".join(combo) for combo in combos]
+    goodInputsList = goodInputs.get(i + 1, [""])
+    for goodInput in goodInputsList:
+        goodInputString = str(goodInput)
         for value in getTriBit():
-            # if i != len(program) - 1:
-            registers["A"] = int(goodInputString + value, 2)
-            # registers["A"] = int("001" + "000" + value, 2)
+            input = int(goodInputString + value, 2)
+            registers["A"] = input
             registers["B"] = 0
             registers["C"] = 0
             output = simulation(registers, program)
-            if output[0] == targetBit:
+
+            goodOutput = True
+            if programStr[i:] == output:
                 if goodInputs and i in goodInputs:
-                    goodInputs[i].add(value)
+                    goodInputs[i].add(goodInputString + value)
                 else:
-                    goodInputs[i] = {value}
-            if not analysis or analysis[-1][1] != output:
-                analysis.append((value, output))
-                print(analysis[-1])
+                    goodInputs[i] = {goodInputString + value}
+                if i == 0:
+                    if int(goodInputString + value, 2) < minimumInput:
+                        minimumInput = int(goodInputString + value, 2)
+
     # add logic for if we're doing the last bit and keeping track of smallest number
 
-
-print(f"Device output is {','.join(output)}")  # 1,7,2,1,4,1,5,4,0
+print(
+    f"The miniminum input that reproduces the program is: {minimumInput}"
+)  # 37221261688308
 end_time = time.perf_counter()
 print(f"Elapsed time: {(end_time - start_time):.6f} seconds")
