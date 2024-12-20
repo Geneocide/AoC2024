@@ -4,7 +4,7 @@ import time
 
 filepath = Path(__file__).parent / "input.txt"
 MAX_SIZE = 6 if "Test" in str(filepath) else 70
-FALL_TIME = 12 if "Test" in str(filepath) else 1024
+
 all_dirs = {
     "^": (0, -1),
     ">": (1, 0),
@@ -104,17 +104,25 @@ with filepath.open() as file:
     for line in file:
         coordinates.append(tuple([int(c) for c in line.strip().split(",")]))
 
-aMap = prettyPrint(coordinates[:FALL_TIME], "#", makeMap=True)
-validTrails = followPathsAStar([(0, 0)], aMap)
-minimumTrailLength = 1e5
-for trail in validTrails:
-    prettyPrint(trail, "O", aMap)
-    minimumTrailLength = (
-        len(trail) if len(trail) < minimumTrailLength else minimumTrailLength
-    )
+low, high = 0, len(coordinates) - 1
+while low <= high:
+    mid = (low + high) // 2
+    aMap = prettyPrint(coordinates[:mid], "#", makeMap=True)
+    if followPathsAStar([(0, 0)], aMap):
+        low = mid + 1
+    else:
+        high = mid - 1
 
-print(
-    f"The minimum trail length found is {minimumTrailLength-1}"  # 278
-)  # starting location doesn't count
+# aMap = prettyPrint(coordinates[:split], "#", makeMap=True)
+# validTrails = followPathsAStar([(0, 0)], aMap)
+
+# minimumTrailLength = 1e5
+# for trail in validTrails:
+#     prettyPrint(trail, "O", aMap)
+#     minimumTrailLength = (
+#         len(trail) if len(trail) < minimumTrailLength else minimumTrailLength
+#     )
+
+print(f"If {coordinates[mid]} fall, they're trapped.")  # (43,12)
 end_time = time.perf_counter()
 print(f"Elapsed time: {(end_time - start_time):.6f} seconds")
