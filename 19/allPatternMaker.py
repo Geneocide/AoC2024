@@ -1,5 +1,6 @@
 from pathlib import Path
 import time
+import copy
 
 filepath = Path(__file__).parent / "inputTest.txt"
 
@@ -22,28 +23,40 @@ print(patterns)
 print(designs)
 
 designPossibilities = {True: [], False: []}
+memo = {}
 
 for design in designs:
     designPossible = None
     validPartials = {}
     for i in range(len(design)):
-        if designPossible != None:
+        if designPossible is not None:
             break
         for partial in validPartials.get(i - 1, [""]):
             if i > 0 and validPartials.get(i - 1, [""]) == [""]:
                 break
             for pattern in patterns:
-                attempt = partial + pattern
+                attempt = "".join(partial) + pattern
+
                 if attempt == design[: len(attempt)]:
-                    if validPartials and i in validPartials:
-                        # need to store as arrays to capture different combos
-                        validPartials[i].add(partial + pattern)
+                    if attempt in memo:
+                        validPartials[i] = memo[attempt].copy()
+                        continue
+                    if partial:
+                        newPartial = partial + [pattern]
+                        if memo.get(attempt):
+                            continue
+                        else:
+                            memo[attempt] = [newPartial[:]]
                     else:
-                        validPartials[i] = {partial + pattern}
+                        newPartial = [pattern]
+                    if i in validPartials:
+                        validPartials[i].append(newPartial[:])
+                    else:
+                        validPartials[i] = [newPartial[:]]
     completeValidDesigns = []
     for partials in validPartials.values():
         for partial in partials:
-            if partial == design:
+            if "".join(partial) == design:
                 completeValidDesigns.append(partial)
     if not completeValidDesigns:
         designPossibilities[False].append(design)
@@ -53,6 +66,6 @@ for design in designs:
 print(
     f"These designs are possible: {designPossibilities[True]}\nThese designs are impossible: {designPossibilities[False]}"
 )
-print(f"Overall there are {len(designPossibilities[True])} possible designs.")  # 333
+print(f"There are {sum([x[1] for x in designPossibilities[True]])} possible designs.")
 end_time = time.perf_counter()
 print(f"Elapsed time: {(end_time - start_time):.6f} seconds")
